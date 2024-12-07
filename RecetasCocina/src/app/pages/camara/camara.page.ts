@@ -138,8 +138,8 @@ export class CamaraPage implements OnInit, OnDestroy {
   }
 
   goToFavPage() {
-    this.tabService.selectedTab = 'map';
-    this.router.navigate(['/mapa']);
+    this.tabService.selectedTab = 'fav';
+    this.router.navigate(['/favoritos']);
   }
 
   goToCamPage() {
