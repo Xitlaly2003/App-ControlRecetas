@@ -47,6 +47,10 @@ export class RecipeDetailsPage implements OnInit, OnDestroy {
     this.subscribeToRouterEvents();
     this.loadReceta(); // Cargar la receta desde el servicio
     this.isFavorite = this.favoritesService.isFavorite(this.receta);
+
+    if (this.receta) {
+      this.isFavorite = this.favoritesService.isFavorite(this.receta);
+    }
   }
 
   // Cargar datos del usuario
@@ -74,19 +78,28 @@ export class RecipeDetailsPage implements OnInit, OnDestroy {
       if (recetaId) {
         // Intentar obtener las recetas guardadas en el almacenamiento
         const recetasGuardadas = await this.storage.get('recetas');
-
+  
         // Si hay recetas guardadas, buscamos la receta en ellas
         if (recetasGuardadas) {
           this.receta = recetasGuardadas.find((r: Receta) => r.id === +recetaId);
         }
-
+  
         // Si no encontramos la receta en el almacenamiento, buscamos en el servicio
         if (!this.receta) {
           this.receta = this.recetaService.getRecetas().find(r => r.id === +recetaId);
         }
+  
+        // Si no encontramos la receta, puede ser útil manejar este caso
+        if (!this.receta) {
+          console.error('Receta no encontrada');
+          // Podrías redirigir a una página de error o hacer alguna acción alternativa
+        } else {
+          // Si se encontró la receta, comprobamos si es favorita
+          this.isFavorite = this.favoritesService.isFavorite(this.receta);
+        }
       }
     });
-  }
+  }  
 
   eliminarReceta(receta: any) {
     if (confirm('¿Estás seguro de que quieres eliminar esta receta?')) {
