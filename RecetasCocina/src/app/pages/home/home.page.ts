@@ -54,21 +54,13 @@ export class HomePage implements OnInit, OnDestroy {
   async ngOnInit() {
     this.loadUserData(); // Cargar datos del usuario
     this.subscribeToRouterEvents();
-    await this.loadRecetas(); // Cargar recetas desde el servicio y almacenamiento
   
     // Crear la instancia de almacenamiento
     await this.storage.create();
-  
-    // Intentar obtener las recetas guardadas en el almacenamiento
-    const recetasGuardadas = await this.storage.get('recetas');
-    if (recetasGuardadas) {
-      // Si hay recetas guardadas, asignarlas a `this.recetas`
-      this.recetas = recetasGuardadas;
-    } else {
-      // Si no hay recetas guardadas, inicializar un array vacío
-      this.recetas = [];
-    }
-  }  
+    
+    // Cargar las recetas del servicio y las almacenadas
+    await this.loadRecetas(); // Cargar recetas desde el servicio y almacenamiento
+  }
 
   // Carga datos del usuario
   private loadUserData() {
@@ -98,8 +90,11 @@ export class HomePage implements OnInit, OnDestroy {
   }
 
   async guardarReceta() {
+    await this.storage.create();
+  
+    // Crear una nueva receta
     const nuevaReceta = {
-      id: this.recetas.length + 1,
+      id: this.recetas.length + 1, // Crear un id único para la receta
       nombre: this.formReceta.value.nombre,
       imagen: this.imagenSeleccionada || 'assets/images/default.png',
       ingredientes: this.formReceta.value.ingredientes.split('\n'),
@@ -108,19 +103,19 @@ export class HomePage implements OnInit, OnDestroy {
   
     // Añadir la nueva receta al array en memoria
     this.recetas.push(nuevaReceta);
-  
+    
     // Guardar las recetas actualizadas en el almacenamiento
     await this.storage.set('recetas', this.recetas);
   
     // Recargar las recetas desde el almacenamiento y verificar en consola
     const recetasGuardadas = await this.storage.get('recetas');
     this.recetas = recetasGuardadas || [];
-    
+  
     console.log('Recetas después de guardar:', this.recetas); // Verifica que las recetas se actualizan
   
     // Cerrar el modal
     this.cerrarModalCrearReceta();
-  }  
+  } 
 
   seleccionarImagen() {
     const fileInput = document.createElement('input');
@@ -143,8 +138,22 @@ export class HomePage implements OnInit, OnDestroy {
     fileInput.click();
   }  
 
-  private loadRecetas() {
-    this.recetas = this.recetaService.getRecetas(); // Obtener recetas del servicio
+  private async loadRecetas() {
+    // Cargar las recetas desde el servicio
+    this.recetas = await this.recetaService.getRecetas();
+  
+    // Intentar obtener las recetas guardadas en el almacenamiento
+    const recetasGuardadas = await this.storage.get('recetas');
+    if (recetasGuardadas) {
+      // Si hay recetas guardadas en Storage, asegurarse de no duplicar
+      const recetasUnicas = this.recetas.concat(
+        recetasGuardadas.filter((receta: any) =>
+          !this.recetas.some((r: any) => r.id === receta.id) // Solo añadir recetas no duplicadas
+        )
+      );
+      this.recetas = recetasUnicas;
+    }
+    console.log('Recetas cargadas:', this.recetas);
   }
 
   irADetalleReceta(receta: Receta) {
