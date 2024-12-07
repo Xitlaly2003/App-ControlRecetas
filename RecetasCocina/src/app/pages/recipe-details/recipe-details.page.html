@@ -51,6 +51,10 @@
     <ion-button expand="full" (click)="isFavorite ? removeFromFavorites(receta) : addToFavorites(receta)">
       {{ isFavorite ? 'Eliminar de favoritos' : 'Añadir a favoritos' }}
     </ion-button>
+
+    <ion-button *ngIf="receta" color="danger" expand="block" (click)="eliminarReceta(receta)">
+      <ion-icon name="trash-outline" style="font-size: 30px;"></ion-icon>
+    </ion-button>
   </div>
 
   <div *ngIf="!receta">
