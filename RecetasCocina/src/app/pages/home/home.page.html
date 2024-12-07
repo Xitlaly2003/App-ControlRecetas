@@ -25,6 +25,7 @@
 </ion-header>
 
 <div class="separator"></div> <!-- Línea separadora -->
+<ion-button expand="full" (click)="abrirModalCrearReceta()">Crear receta</ion-button>
 
 <ion-content>
   <ion-grid>
@@ -40,6 +41,44 @@
       </ion-col>
     </ion-row>
   </ion-grid>
+</ion-content>
+
+<ion-modal [isOpen]="mostrarModalCrearReceta" (ionModalDidDismiss)="cerrarModalCrearReceta()">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar>
+          <ion-title>Crear Receta</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="cerrarModalCrearReceta()">Cerrar</ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content>
+        <form [formGroup]="formReceta" (ngSubmit)="guardarReceta()">
+          <ion-item>
+            <ion-label position="floating">Nombre de la receta</ion-label>
+            <ion-input formControlName="nombre"></ion-input>
+          </ion-item>
+          <ion-item>
+            <ion-label position="floating">Ingredientes</ion-label>
+            <ion-textarea formControlName="ingredientes"></ion-textarea>
+          </ion-item>
+          <ion-item>
+            <ion-label position="floating">Procedimiento</ion-label>
+            <ion-textarea formControlName="procedimiento"></ion-textarea>
+          </ion-item>
+          <ion-item>
+            <ion-label>Imagen</ion-label>
+            <ion-button (click)="seleccionarImagen()">Seleccionar Imagen</ion-button>
+          </ion-item>
+          <ion-button expand="block" (click)="guardarReceta()" [disabled]="formReceta.invalid">
+            Guardar Receta
+          </ion-button>
+          <img *ngIf="imagenSeleccionada" [src]="imagenSeleccionada" alt="Previsualización" />
+        </form>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
 </ion-content>
 
 <div class="separator"></div> <!-- Línea separadora -->
