@@ -6,6 +6,9 @@ import { ActivatedRoute } from '@angular/router';
 import { RecetaService } from '../../services/receta.service'; // Importar el servicio de recetas
 import { FavoritosService } from 'src/app/services/favoritos.service';
 import { TabService } from '../../services/tab.service';
+import { Storage } from '@ionic/storage-angular';
+import { Receta } from 'src/app/models/receta.model';
+import { NavController } from '@ionic/angular';
 
 @Component({
   selector: 'app-recipe-details',
@@ -29,11 +32,14 @@ export class RecipeDetailsPage implements OnInit, OnDestroy {
     private recetaService: RecetaService, // Inyectamos el servicio de recetas
     public tabService: TabService,
     private activatedRoute: ActivatedRoute,
-    private favoritesService: FavoritosService
+    private favoritesService: FavoritosService,
+    private storage: Storage,
+    private navController: NavController
   ) { 
     this.userName = this.authService.getUserName();
     this.isLoggedIn = !!this.userName;
     this.userId = this.authService.getUserId();
+    this.storage.create();
   }
 
   ngOnInit() {
@@ -61,15 +67,57 @@ export class RecipeDetailsPage implements OnInit, OnDestroy {
   }
 
   // Cargar la receta desde el servicio
-  private loadReceta() {
+  private async loadReceta() {
     // Obtener el parámetro id de la URL
-    this.activatedRoute.queryParamMap.subscribe((paramMap) => {
+    this.activatedRoute.queryParamMap.subscribe(async (paramMap) => {
       const recetaId = paramMap.get('id');
       if (recetaId) {
-        // Usar el id para obtener la receta desde el servicio
-        this.receta = this.recetaService.getRecetas().find(r => r.id === +recetaId);
+        // Intentar obtener las recetas guardadas en el almacenamiento
+        const recetasGuardadas = await this.storage.get('recetas');
+
+        // Si hay recetas guardadas, buscamos la receta en ellas
+        if (recetasGuardadas) {
+          this.receta = recetasGuardadas.find((r: Receta) => r.id === +recetaId);
+        }
+
+        // Si no encontramos la receta en el almacenamiento, buscamos en el servicio
+        if (!this.receta) {
+          this.receta = this.recetaService.getRecetas().find(r => r.id === +recetaId);
+        }
       }
     });
+  }
+
+  eliminarReceta(receta: any) {
+    if (confirm('¿Estás seguro de que quieres eliminar esta receta?')) {
+      // Aquí eliminamos la receta del almacenamiento local
+      this.removeRecipeFromStorage(receta);
+
+      // Aquí puedes agregar la lógica para eliminar la receta de otros lugares si es necesario
+      console.log('Receta eliminada:', receta.nombre);
+
+      // Recargar las recetas (actualizar la vista)
+      this.loadReceta();
+
+      // Redirige al usuario a la pantalla principal o a donde desees
+      this.router.navigate(['/home']).then(() => {
+        window.location.reload();  // Esto recargará la página
+      });
+    }
+  }
+
+  // Método auxiliar para eliminar la receta del almacenamiento local
+  private async removeRecipeFromStorage(receta: any) {
+    // Obtener las recetas guardadas en el almacenamiento
+    const recetasGuardadas = await this.storage.get('recetas');
+
+    if (recetasGuardadas) {
+      // Filtrar las recetas que no sean la que queremos eliminar
+      const updatedRecetas = recetasGuardadas.filter((r: Receta) => r.id !== receta.id);
+
+      // Guardar las recetas actualizadas en el almacenamiento
+      await this.storage.set('recetas', updatedRecetas);
+    }
   }
 
   ngOnDestroy() {
